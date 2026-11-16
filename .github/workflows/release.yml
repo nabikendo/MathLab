@@ -23,6 +23,7 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
+      # O workflow publica somente o MathLab; nenhum arquivo do SGE Diário é utilizado.
       - name: Preparar versão
         id: version
         shell: bash
@@ -72,7 +73,7 @@ jobs:
           "$BUILD_TOOLS/apksigner" sign --ks "$RUNNER_TEMP/mathlab.jks" --ks-key-alias "$KEY_ALIAS" --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD --out MathLab-Android.apk "$RUNNER_TEMP/mathlab-aligned.apk"
           "$BUILD_TOOLS/apksigner" verify MathLab-Android.apk
       - name: Preparar pacote web
-        run: zip -j MathLab-web.zip index.html version.json MATHLAB_README.md
+        run: zip -j MathLab-web.zip index.html version.json README.md
       - name: Preparar artefatos
         run: cp android/app/build/outputs/apk/debug/app-debug.apk MathLab-Android-TESTE.apk
       - uses: actions/upload-artifact@v4
