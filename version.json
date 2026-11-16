@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
-  "notes": "Verificação de atualizações integrada ao MathLab, interface Expressive e trilhas demonstrativas.",
+  "version": "0.4.0",
+  "notes": "Aplicativo Android com funcionamento offline, verificação de novas versões e botão de atualização.",
   "released": "2026-11-16"
 }
