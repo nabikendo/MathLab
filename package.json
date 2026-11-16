@@ -1,0 +1,19 @@
+{
+  "name": "mathlab",
+  "version": "0.4.0",
+  "private": true,
+  "description": "MathLab Expressive Android via Capacitor",
+  "scripts": {
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:build": "npx cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.0",
+    "@capacitor/android": "^7.4.0",
+    "@capacitor/browser": "^7.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.0"
+  }
+}
