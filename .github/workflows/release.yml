@@ -11,6 +11,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SIGNING_ENABLED: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && secrets.ANDROID_KEYSTORE_PASSWORD != '' && secrets.ANDROID_KEY_ALIAS != '' && secrets.ANDROID_KEY_PASSWORD != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,6 +53,24 @@ jobs:
       - name: Compilar APK de testes
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
+      - name: Compilar APK de produção (se assinatura configurada)
+        if: ${{ env.SIGNING_ENABLED == 'true' }}
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Assinar APK de produção
+        if: ${{ env.SIGNING_ENABLED == 'true' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/mathlab.jks"
+          BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          "$BUILD_TOOLS/zipalign" -f -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/mathlab-aligned.apk"
+          "$BUILD_TOOLS/apksigner" sign --ks "$RUNNER_TEMP/mathlab.jks" --ks-key-alias "$KEY_ALIAS" --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD --out MathLab-Android.apk "$RUNNER_TEMP/mathlab-aligned.apk"
+          "$BUILD_TOOLS/apksigner" verify MathLab-Android.apk
       - name: Preparar pacote web
         run: zip -j MathLab-web.zip index.html version.json MATHLAB_README.md
       - name: Preparar artefatos
@@ -69,3 +89,4 @@ jobs:
             gh release create "$TAG" --target "$GITHUB_SHA" --title "MathLab $TAG" --notes "Prévia Android: APK de TESTES (assinatura debug temporária). A atualização por cima de outra compilação não é garantida. Versão web incluída. Para atualizações Android estáveis é necessária assinatura de release persistente."
           fi
           gh release upload "$TAG" MathLab-web.zip MathLab-Android-TESTE.apk --clobber
+          if [ -f MathLab-Android.apk ]; then gh release upload "$TAG" MathLab-Android.apk --clobber; fi
