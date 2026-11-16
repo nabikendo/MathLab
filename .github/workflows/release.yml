@@ -1,0 +1,30 @@
+name: Release MathLab
+on:
+  push:
+    branches: [main]
+    paths:
+      - version.json
+      - .github/workflows/release.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ler versão
+        id: version
+        run: echo "tag=v$(python3 -c 'import json;print(json.load(open("version.json"))["version"])')" >> "$GITHUB_OUTPUT"
+      - name: Preparar pacote
+        run: zip -j MathLab-web.zip index.html version.json MATHLAB_README.md
+      - name: Criar Release, se ainda não existir
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG já existe; nenhuma alteração feita."
+          else
+            gh release create "$TAG" MathLab-web.zip --target "$GITHUB_SHA" --title "MathLab $TAG" --notes "MathLab Expressive: trilhas demonstrativas, diagnóstico, progresso local e verificação de atualizações dentro do aplicativo web. Esta é uma versão inicial de demonstração."
+          fi
