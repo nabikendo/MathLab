@@ -1,4 +1,4 @@
-name: Release MathLab
+name: Build e Release MathLab Android
 on:
   push:
     branches: [main]
@@ -9,22 +9,63 @@ on:
 permissions:
   contents: write
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Ler versão
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Preparar versão
         id: version
-        run: echo "tag=v$(python3 -c 'import json;print(json.load(open("version.json"))["version"])')" >> "$GITHUB_OUTPUT"
-      - name: Preparar pacote
+        shell: bash
+        run: |
+          VERSION=$(python3 -c 'import json;print(json.load(open("version.json"))["version"])')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+      - name: Gerar projeto Android
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Configurar versão e identidade Android
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib,re,json
+          v=json.load(open('version.json'))['version']
+          parts=[int(x) for x in v.split('.')]
+          code=parts[0]*1000000+parts[1]*1000+parts[2]+1
+          p=pathlib.Path('android/app/build.gradle')
+          s=p.read_text()
+          s=re.sub(r'versionCode\s+\d+',f'versionCode {code}',s)
+          s=re.sub(r'versionName\s+"[^"]+"',f'versionName "{v}"',s)
+          p.write_text(s)
+          PY
+      - name: Compilar APK de testes
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      - name: Preparar pacote web
         run: zip -j MathLab-web.zip index.html version.json MATHLAB_README.md
-      - name: Criar Release, se ainda não existir
+      - name: Preparar artefatos
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk MathLab-Android-TESTE.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MathLab-Android-TESTE
+          path: MathLab-Android-TESTE.apk
+      - name: Criar ou atualizar Release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG já existe; nenhuma alteração feita."
-          else
-            gh release create "$TAG" MathLab-web.zip --target "$GITHUB_SHA" --title "MathLab $TAG" --notes "MathLab Expressive: trilhas demonstrativas, diagnóstico, progresso local e verificação de atualizações dentro do aplicativo web. Esta é uma versão inicial de demonstração."
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "MathLab $TAG" --notes "Prévia Android: APK de TESTES (assinatura debug temporária). A atualização por cima de outra compilação não é garantida. Versão web incluída. Para atualizações Android estáveis é necessária assinatura de release persistente."
           fi
+          gh release upload "$TAG" MathLab-web.zip MathLab-Android-TESTE.apk --clobber
