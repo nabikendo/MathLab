@@ -46,12 +46,12 @@ renderTopics();renderCatalog();
 </script>
 <div id="updateNotice" role="status" aria-live="polite" style="display:none;position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:99;background:#25211e;color:#fff;padding:15px 18px;border-radius:22px;box-shadow:0 12px 36px #0005;max-width:calc(100vw - 24px);width:420px"><strong id="updateTitle">Atualização disponível</strong><p id="updateMessage" style="font-size:13px;color:#ddd;margin:6px 0 12px"></p><button class="primary" id="updateNow">Atualizar agora</button> <button class="secondary" id="updateLater">Mais tarde</button></div>
 <script>
-const MATHLAB_VERSION='0.3.0';
+const MATHLAB_VERSION='0.4.0';
 const VERSION_URL='version.json';
 function compareVersion(a,b){const aa=String(a).replace(/^v/,'').split('.').map(Number),bb=String(b).replace(/^v/,'').split('.').map(Number);for(let i=0;i<3;i++){if((aa[i]||0)!==(bb[i]||0))return (aa[i]||0)>(bb[i]||0)?1:-1}return 0}
 async function checkMathLabUpdate(manual=false){
  if(location.protocol==='file:'){if(manual)alert('Abra o MathLab pelo site para receber atualizações automáticas.');return}
- try{const response=await fetch(VERSION_URL+'?t='+Date.now(),{cache:'no-store'});if(!response.ok)throw Error('HTTP '+response.status);const info=await response.json();if(!/^\\d+\\.\\d+\\.\\d+$/.test(info.version))throw Error('Versão inválida');if(compareVersion(info.version,MATHLAB_VERSION)<=0){if(manual)alert('Você já usa a versão mais recente: '+MATHLAB_VERSION);return}if(!manual&&sessionStorage.getItem('mathlab-deferred')===info.version)return;
+ try{const response=await fetch(VERSION_URL+'?t='+Date.now(),{cache:'no-store'});if(!response.ok)throw Error('HTTP '+response.status);const info=await response.json();if(!/^\d+\.\d+\.\d+$/.test(info.version))throw Error('Versão inválida');if(compareVersion(info.version,MATHLAB_VERSION)<=0){if(manual)alert('Você já usa a versão mais recente: '+MATHLAB_VERSION);return}if(!manual&&sessionStorage.getItem('mathlab-deferred')===info.version)return;
  document.getElementById('updateTitle').textContent='MathLab v'+info.version+' disponível';document.getElementById('updateMessage').textContent=info.notes||'Uma nova versão está pronta.';document.getElementById('updateNotice').style.display='block';document.getElementById('updateNow').onclick=()=>{location.href=location.pathname+'?v='+encodeURIComponent(info.version)};document.getElementById('updateLater').onclick=()=>{sessionStorage.setItem('mathlab-deferred',info.version);document.getElementById('updateNotice').style.display='none'};
  }catch(e){if(manual)alert('Não foi possível verificar atualizações: '+e.message)}
 }
