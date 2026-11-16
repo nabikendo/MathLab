@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <application
+        android:allowBackup="false"
+        android:enableOnBackInvokedCallback="true"
+        android:usesCleartextTraffic="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.arquivos"
+            android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/arquivos_compartilhados" />
+        </provider>
+
+        <activity
+            android:name=".MainActivity"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|navigation|density|fontScale|uiMode"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service android:name=".SgeDiarioTileService" android:label="@string/app_name"
+            android:icon="@drawable/ic_widget_refresh" android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <activity android:name=".widget.WidgetConfigActivity" android:exported="true">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
+        </activity>
+
+        <receiver android:name=".widget.DiarioGlanceWidgetReceiver" android:exported="true" android:label="@string/widget_turmas">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/diario_widget_info" />
+        </receiver>
+
+        <receiver android:name=".widget.ResumoWidgetReceiver" android:exported="true" android:label="@string/widget_resumo">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/resumo_widget_info" />
+        </receiver>
+
+        <receiver android:name=".widget.ComponenteWidgetReceiver" android:exported="true" android:label="@string/widget_componentes">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/componente_widget_info" />
+        </receiver>
+
+        <receiver android:name=".widget.CoordenacaoWidgetReceiver" android:exported="true" android:label="@string/widget_coordenacao">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/coordenacao_widget_info" />
+        </receiver>
+
+        <receiver android:name=".widget.ProfessorWidgetReceiver" android:exported="true" android:label="@string/widget_professores">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/professor_widget_info" />
+        </receiver>
+
+        <receiver android:name=".widget.FocoWidgetReceiver" android:exported="true" android:label="@string/widget_foco">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/foco_widget_info" />
+        </receiver>
+
+    </application>
+
+</manifest>

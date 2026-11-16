@@ -1,0 +1,112 @@
+name: Build SGE Widget APK
+
+on:
+  push:
+    branches: [ main, master, feat/ios-inspired-neutral-ui, feat/tablet-history-coordination, feat/inapp-updates-school-tools, feat/android17-desktop-2-5-5 ]
+  pull_request:
+    branches: [ main ]
+    paths: ['app/**', 'AndroidManifest.xml', '**.gradle.kts', 'gradle.properties', '.github/workflows/build-apk.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sge-widget-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.0'
+      - name: Build debug APK
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle testDebugUnitTest assembleDebug "-Pversao=$(cat release/versao.txt)-preview.$GITHUB_RUN_NUMBER" "-Pcodigo=$GITHUB_RUN_NUMBER" --no-daemon --stacktrace 2>&1 | tee build.log
+      - name: Resumo dos erros
+        if: failure()
+        run: |
+          (grep -E '^e: |^e: file|error:' build.log | head -25; grep -A14 'What went wrong' build.log | head -30) | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}' > erros.txt
+          echo "::error title=Erros do build::$(cat erros.txt)"
+      - name: Identificar APK de prévia
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk "SGE-Diario-previa-${{ github.run_number }}.apk"
+          python scripts/metadata-atualizacao.py "SGE-Diario-previa-${{ github.run_number }}.apk" atualizacao-preview.json
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sge-diario-widget-apk
+          path: SGE-Diario-previa-${{ github.run_number }}.apk
+      - name: Publicar no Releases
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk SGE-Diario-teste.apk
+          python scripts/metadata-atualizacao.py SGE-Diario-teste.apk atualizacao-teste.json
+          gh release delete latest --cleanup-tag --yes || true
+          gh release create latest SGE-Diario-teste.apk atualizacao-teste.json --prerelease --target "$GITHUB_SHA" \
+            --title "Canal de testes (última versão)" \
+            --notes "APK de teste gerado automaticamente. Baixe SGE-Diario-teste.apk abaixo, em Assets. Para uso diário, prefira a versão estável (tag vX.Y)."
+
+  ui-previews:
+    if: startsWith(github.ref, 'refs/heads/feat/') || github.event_name == 'pull_request'
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - perfil: pixel_2
+            api: 29
+          - perfil: pixel_c
+            api: 34
+          - perfil: pixel_6
+            api: '37.0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.0'
+      - name: Habilitar aceleração do emulador
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Navegação e capturas em Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          profile: ${{ matrix.perfil }}
+          disable-animations: true
+          script: bash scripts/verify-ui.sh -Pversao="$(cat release/versao.txt)-preview.$GITHUB_RUN_NUMBER" -Pcodigo="$GITHUB_RUN_NUMBER"
+        env:
+          SGE_UI_SMOKE: ${{ github.event_name == 'pull_request' }}
+      - name: Capturas da prévia
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sge-layout-preview-${{ github.run_number }}-${{ matrix.perfil }}
+          path: |
+            ui-previews/*.png
+            pdf-previews/*.pdf
+            app/build/reports/androidTests/connected/debug/**
