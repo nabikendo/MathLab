@@ -6,7 +6,8 @@
   "scripts": {
     "android:sync": "npx cap sync android",
     "android:open": "npx cap open android",
-    "android:build": "npx cap sync android && cd android && ./gradlew assembleDebug"
+    "android:build": "npx cap sync android && cd android && ./gradlew assembleDebug",
+    "test": "node test/smoke.cjs"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.0",
