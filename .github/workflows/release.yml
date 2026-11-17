@@ -23,7 +23,6 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
-      # O workflow publica somente o MathLab; nenhum arquivo do SGE Diário é utilizado.
       - name: Preparar versão
         id: version
         shell: bash
@@ -85,14 +84,14 @@ jobs:
         with:
           name: MathLab-Android-TESTE
           path: MathLab-Android-TESTE.apk
-      - name: Criar ou atualizar Release
+      - name: Criar ou atualizar Release estável
+        if: ${{ env.SIGNING_ENABLED == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
         shell: bash
         run: |
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --target "$GITHUB_SHA" --title "MathLab $TAG" --notes "Prévia Android: APK de TESTES (assinatura debug temporária). A atualização por cima de outra compilação não é garantida. Versão web incluída. Para atualizações Android estáveis é necessária assinatura de release persistente."
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "MathLab $TAG" --notes "MathLab Android assinado e pacote Web. Atualizações Android requerem a mesma chave de assinatura nas versões futuras."
           fi
-          gh release upload "$TAG" MathLab-web.zip MathLab-Android-TESTE.apk --clobber
-          if [ -f MathLab-Android.apk ]; then gh release upload "$TAG" MathLab-Android.apk --clobber; fi
+          gh release upload "$TAG" MathLab-web.zip MathLab-Android.apk --clobber
