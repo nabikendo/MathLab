@@ -20,4 +20,4 @@ O MathLab é um protótipo educacional. A interface e 12 exercícios demonstrati
 Não há currículo completo, banco ENEM oficial, IA, sincronização de contas, avaliação adaptativa validada ou instalação automática de APK. O aplicativo Android abre a página de Release para baixar a atualização; a instalação continua sob controle do Android.
 
 ## Repositório
-Este projeto é independente do SGE Diário e do Atlas. Código-fonte: https://github.com/nabikendo/MathLab
+Este projeto possui código e distribuição próprios. Código-fonte: https://github.com/nabikendo/MathLab
