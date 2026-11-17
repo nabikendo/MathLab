@@ -1,7 +1,7 @@
 # CLAUDE.md — Protocolo de desenvolvimento do MathLab
 
 ## Propósito
-Você lidera a implementação, correção e publicação de funcionalidades no repositório **nabikendo/MathLab**. O MathLab é uma plataforma independente de aprendizagem de Matemática, com trilhas progressivas, diagnóstico de pré-requisitos e versões Web/Android. **Não confunda nem modifique** os projetos SGE Diário (`nabikendo/sge-diario-widget`) ou Atlas.
+Você lidera a implementação, correção e publicação de funcionalidades no repositório **nabikendo/MathLab**. O MathLab é uma plataforma independente de aprendizagem de Matemática, com trilhas progressivas, diagnóstico de pré-requisitos e versões Web/Android. **Não modifique outros repositórios ou aplicativos** durante tarefas do MathLab.
 
 Uma tarefa está concluída somente quando seus critérios de aceitação são satisfeitos e os comandos de teste relevantes passam. Não declare APK, Release ou GitHub Pages publicados sem evidência da execução correspondente.
 
@@ -25,7 +25,7 @@ Reutilize definições de papéis em `.claude/agents/` quando existirem. Informe
 7. **Aprender.** Após correções de causa raiz, registre em `tasks/lessons.md` o erro, causa, prevenção e teste de regressão.
 
 ## Regras específicas do MathLab
-- **Isolamento:** nunca altere SGE Diário ou Atlas ao trabalhar no MathLab.
+- **Isolamento:** nunca altere outros projetos ao trabalhar no MathLab.
 - **Mudança mínima:** prefira soluções pequenas, legíveis e reversíveis; evite refatorações alheias à solicitação.
 - **Compatibilidade:** mantenha funcionamento responsivo em celular e tablet horizontal, com acessibilidade e interface em português.
 - **Pedagogia:** diferencie exercícios demonstrativos de conteúdo curricular validado e questões oficiais; não invente autoria ou origem de itens.
